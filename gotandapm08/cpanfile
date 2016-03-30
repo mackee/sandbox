@@ -1,0 +1,2 @@
+requires "DBIx::Class";
+requires "DBD::mysql";
