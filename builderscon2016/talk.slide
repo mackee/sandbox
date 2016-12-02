@@ -90,13 +90,13 @@ AdventCalendarやってます (通常トラックとUnityトラック)
 - Protocol Buffers
 - JSON Schema
 
-*弊社では*
-
-- Baalという独自のやつ
-
-*  Baalという独自のやつ
-
-.code code/idls/RootService.faced
+: *弊社では*
+: 
+: - Baalという独自のやつ
+: 
+: *  Baalという独自のやつ
+: 
+: .code code/idls/RootService.faced
 
 * 一般的なSwagger
 
