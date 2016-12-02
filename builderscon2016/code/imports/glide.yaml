@@ -1,0 +1,5 @@
+package: github.com/mackee/sandbox/builderscon2016/code/imports
+import:
+- package: golang.org/x/tools
+  subpackages:
+  - imports

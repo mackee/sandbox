@@ -296,6 +296,64 @@ go/formatを使う
 
 * 使っていないパッケージがあると怒られる
 
-- Goは使っていないパッケージがあると怒られてコンパイルできないので何らかの方法で回避しなければならない
+: Goは使っていないパッケージがあると怒られてコンパイルできないので何らかの方法で回避しなければならない
 
-: 前述の例では`strconv`をimportしているのにstringのfieldにしか変換しないと`strconv`を使わない
+.code code/webwithidls/generated2.go /^type nameRequest/,/\z/
+
+- strconvが使われていない
+
+* 回避方法その1 無理やり使ったことにする
+
+パッケージに生えているconstやvarを_に突っ込む
+
+ var _ = strconv.IntSize
+
+Pros: お手軽。テンプレにこれを1行入れるだけでOK
+Cons: カッコ悪い 人間には意味不明
+
+* 回避方法その2 使うパッケージを管理する
+
+コード生成時に
+
+- この機能を使ったらimportする
+- この型を見つけたらimportする
+
+というようにimportするpackageを管理しておく
+
+[[https://github.com/mackee/go-sqlla/blob/master/table.go#L26-L31][sqllaが採用している手法]]
+
+ switch {
+ case c.TypeName() == "time.Time":
+ 	t.additionalPackagesMap["time"] = struct{}{}
+ case c.TypeName() == "mysql.NullTime":
+ 	t.additionalPackagesMap["github.com/go-sql-driver/mysql"] = struct{}{}
+ }
+
+Pros: 技術的にマットウそう
+Cons: 自分が疲弊する。そこまで管理しきれるかってなる
+
+* 回避方法その3 goimportsを使う
+
+先ほど紹介したgo/formatの代わりに[[https://golang.org/x/tools/cmd/goimports][goimports]]を使うと使ってないパッケージを一掃してくれる
+
+.play code/imports/main.go /^var bs/,/\z/
+
+: これを書いた時にdragon-imports使っててうまく動かなくてvendoringしたらうまく動いたのでvendoring重要だなと思いました
+
+* コード生成した成果物をコミットするかどうか問題
+
+- コード生成したものは元のやつが変更されない限りコードも変わらないからコミットしないよ派
+- デプロイするものは全てリポジトリに乗ってないと不安で寝れないよ派
+
+とりあえず私はリポジトリにコミットしている派。生成したコードをテストするならコードレビューするのもええやろという気分から来ているがこれが正しいかどうかは今でも不安がある。
+
+- コード生成は極力CIでやったほうが環境を固定できる。vendoringをちゃんとしていてかつ変なコードを入れてないという確信がない限り手元でコードを生成するのはよくなさそうな気がする
+- コード生成のときにGOPATHを一時的に書き換えて専用のvendoringされたディレクトリ内にコピーした上で生成するというのはやったことがある
+
+* まとめ
+
+- Goのコード生成はフロンティア。アイディア次第でまだまだ化ける気配があるぞ！！
+- Goでgenericsが入ることは少なくとも1.xでは無いのでその間はinterfaceをこねくり回すかgenerateするかという感じです
+- そもそもgenericsでもカバーしきれない自由度をコード生成は持っている気がする
+- ただ、コード生成は気合を入れないとまだまだ出来ない感じがするので、genbaseのようなコード生成を楽にするライブラリが求められている気がします。sqllaの経験を踏まえて私も案を考えています
+- わかりにくいという問題はつきまとうのでわかりやすさを示す配慮が必要。`go generate`もその一助になると思う
