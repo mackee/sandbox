@@ -1,0 +1,300 @@
+世の中の困り事はだいたいGoのコード自動生成で解決する
+builderscon tokyo 2016
+16:15 3 Dec 2016
+Tags: go generate
+
+mackee_w a.k.a macopy
+
+* Who?
+
+.image icon.png 150 _
+mackee_w a.k.a macopy
+twitter:@mackee_w
+github:mackee
+
+*出没地域*
+
+- Yokohama\.(pm|go) Co-Organizer
+- Hachioji.pm, Perl入学式 etc...
+
+* [Ad]
+
+*所属*
+面白法人カヤック
+
+.image kayac_image.png 200 _
+上の画像の人はワタシです。(ISUCONは優勝したことない)
+
+AdventCalendarやってます (通常トラックとUnityトラック)
+
+.link http://qiita.com/advent-calendar/2016/kayac
+
+* このトークで話すこと
+
+- Goでのコード生成は何を解決するか, 解決した事例
+- Goでのコード生成の手法, ツール
+- Goでコード生成したときの困りポイントと解決方法(と誰かに解決してほしいこと)
+
+*このトークで話さないこと*
+
+- Go以外のコード生成について
+
+コード生成については使えることがあるかもしれないので持って帰ってもらえればという感じです
+
+- genericsについて・・・！ (懇親会などで集めたい知見です)
+
+* 注意
+
+- このトークは私の観測範囲内の情報に基づいて行われており、また間違った情報や古い情報が含まれている気がします。なのでツッコミ大歓迎です。
+- スピーカーの背景としてWeb系のサーバサイドエンジニアというのがあります
+
+* Goのコード生成は何を解決するか
+
+*人間が書くコード/設定をコンパクトにする*
+
+- [[https://ja.wikipedia.org/wiki/Don't_repeat_yourself][DRY]]的な
+- Goはシンプルな言語, ゆえに他の言語にない機能がある
+- 何も準備をしないとコピペが蔓延するケースが有る -> ただしうまくinterfaceを使えば防げるケースがほとんど
+
+*他のエコシステムと接続する*
+
+- 例えばHTTPのquery stringやFormをGoのstructに変換する
+手でも書けるけれど人間のやることではない
+
+- 例えばSQLのテーブルとそのカラムの方をGoのstructとプリミティブ型に変換する
+- 例えばJSONのサンプルを読み込んでstructを生成する
+
+* HTTPで受けたリクエストをGoのstructに変換する
+.code code/webbasic/main.go /^func rootHandler/,/^}/
+
+* だるい
+
+*別にmap[string]{interface}とかnet/url.Valuesとかでいいのでは*
+
+- 型変換しなくてもいいけれどしておいたほうが後々便利
+- 結局あとで型がちゃんとある関数に放り込むときに型変換をやる
+- structに詰めておくと便利 補完に出るしタイプミスもない
+
+*ただ毎回これを書くのは人間のやることではない*
+
+(以下超個人的な事情)
+
+- そもそも(APIであれば)定義書とかあるでしょ
+- 僕はソーシャルゲームのサーバのAPIを書くエンジニアでありIDLでクライアントとやりとりしている
+
+* IDLを使ってコントローラを自動生成する
+
+*一般的には*
+
+- Swagger
+- Protocol Buffers
+- JSON Schema
+
+*弊社では*
+
+- Baalという独自のやつ
+
+*  Baalという独自のやつ
+
+.code code/idls/RootService.faced
+
+* 一般的なSwagger
+
+.code code/idls/swagger.yml /^paths/,/\z/
+
+* 同じことを2度書かないためにコード生成する
+
+*議論*
+
+- IDLからコードを生成するか
+- コードからIDLを生成するか
+
+*IDLをから書く*
+
+IDLはサービスとデータ構造定義の専門家なので専門家に任せたほうが良い
+
+クライアントを書く人はGoがわからない(Goの学習コストが高い)かもしれないが、
+IDLは分かっているはず
+クライアントを書く人でも定義を書けるようにする
+
+: Swaggerのようなドキュメント生成ツールのあるものであればクライアントはそれを見ながら手書きするかも……？
+: -> クライアントもコード生成を行ってエコシステムの中に巻き込む -> コードを書くにはIDLを触らないといけない環境にする
+
+* GoでHTTPのルーティングとリクエストパーサーを書く場合
+
+*実装と分離する*
+
+.code code/webwithidls/generated.go /^type rootRequest/,/\z/
+
+* 実装と分離する
+
+.code code/webwithidls/main.go /^func main/,/\z/
+
+- Goは一つの名前空間を複数のファイルに分けることが出来るため、コード生成専用のファイルと実装を分ける
+- 実装がなくてもコンパイルを通せるようにするためにmainでfuncを登録するようなコード
+
+: めっちゃ列挙するので結局人間のやることか？感はある
+
+*他にも*
+
+- interfaceで分ける方法
+- デフォルトはモックみたいなのを生成してそのファイルがあったら上書きしない(挙動が少しトリッキーで分かりにくいか？)
+
+* もう一つの例 クエリビルダー
+
+*sqllaというコード生成ベースのクエリビルダー*
+
+- [[https://github.com/mackee/go-sqlla][github.com/mackee/go-sqlla]]
+- [[http://qiita.com/mackee_w/items/033a72c10687014feaef][reflectフリーなクエリビルダーsqllaにORM-likeなメソッドを追加した]]
+
+*解決すること*
+
+- データベースとGoの間の型変換の自動化
+- Goで発行したクエリがデータベース側でシンタックスエラーなどが起こる可能性がない(はず)
+- Goからデータベースのテーブルの定義の見える化
+
+* 使い方
+
+*テーブルを定義する*
+
+.code code/sqlla/table.go
+
+* 使い方
+
+*generateする*
+
+ $ go generate
+
+*自動生成されたファイルが出来ている*
+
+ $ ls
+ example_auto.go table.go
+
+* 生成されたファイル
+
+.code code/sqlla/example_auto.go
+
+* クエリを発行する
+
+.code code/sqlla/main.go /^func printSQL/,/^}/
+
+ SELECT id, name, created_at FROM example WHERE id = ?; [100] <nil>
+
+*メソッドに型がきちんと定義されているので以下のような例はコンパイルが通らない*
+ 
+ func main() {
+ 	q := NewExampleSQL().Select().ID("hogehoge")
+ 	fmt.Println(q.ToSql())
+ }
+　
+ ./main.go:6: cannot use "hogehoge" (type string) as type uint64 in argument to NewExampleSQL().Select().ID
+
+* 補完が効く
+
+.video sqlla.mp4 video/mp4 400 _
+
+* 最近ORM的なのも付きました
+
+.code code/sqlla/main.go /^func mappingSQL/,/^}/
+
+ {ID:100 Name:hogehoge CreatedAt:2016-12-03 16:15:00 +0000 UTC}
+
+* 動機
+
+- 以前ソーシャルゲームでGoでサーバを書いたときにこのあたりのマッピングや型変換を手で書いていた
+- 何度も何度も書くのが嫌になってこういうのがあったら良いのではと書いた
+- interfaceでやっても型変換のめんどくささや型安全を守ることが難しそうだった
+
+*何度も同じコードを書いてそれがinterfaceで解決するにはめんどくさい場合にはコード生成が有効*
+
+* コード生成に必要なもの
+
+- コード生成の元となるソース(前述の例だとIDLやGoのstruct)
+- ソースのパーサー
+- コード生成のされた後の想像図みたいなコード
+
+*生成元パーサーがない場合は？*
+
+- 以前MySQLのDDLからsqllaのstructを生成したくてパーサーを書いた
+- 案外すぐ書けるのでちょっと探してなかったら書いたほうが早い その場しのぎのものであれば気合で書ける
+
+* reflect vs go/parser
+
+: 生成元がGoである場合、をパースする手段は2種類ある
+
+*reflect*
+
+- 動的解析(?)
+- すでにコードとして実行できる状態のものからコード生成に必要な情報を所得する
+
+Pros:
+
+- 関数の実行結果を利用できる -> DSLとしての幅が広がる
+- interfaceを満たしているかどうかのチェックが出来る
+- structのfield tagももちろん利用可能
+
+Cons:
+
+- コメントは取れない
+- 対象のコードにコード生成君を組み込む必要がある
+外部コマンドで切り出すことは出来ない
+
+* reflect vs go/parser
+
+*go/parser*
+
+- 静的解析
+- パースしてASTにまで変換した状態でコード生成に必要な情報を取得する
+
+Pros:
+
+- 対象のコードにコード生成君を埋め込まなくても良い 外部コマンドとして切り離し可能
+- コメントが利用可能
+
+Cons:
+
+- reflectに比べると結構書きにくい type switch/assertionで再帰的に掘っていく感じ
+- interfaceが実装されているかとかコードの実行などは出来ない
+
+* sqllaではgo/parserを採用
+
+- 外部コマンドに切り出すためにテンプレートも埋め込んでいる
+[[https://github.com/jteeuwen/go-bindata][github.com/jteeuwen/go-bindata]] を利用している
+
+- 型名などを取得するユーティリティなどが集まった[[https://github.com/favclip/genbase][github.com/favclip/genbase]]も利用している
+[[http://www.slideshare.net/vvakame/gocon-2015-summer][GoCon 2015 Summer GoのASTをいじくって新しいツールを作る]]
+
+* コードを生成する方法
+
+- 例の2つではtext/templateを使っている
+- そのままコード定義の中にテキストとして埋め込んでいる例もある
+- 元となるgoのコードをgo/astでゴリゴリ書き換えてprintする方法もある
+[[http://qiita.com/naoina/items/7966f73f3a807b3d25d6][Go と reflect と generate]]
+
+* コード生成のつらみ事例
+
+*templateだと補完が効かない*
+
+当たり前だろという感じですが、補完を利かすために補完の聞かない環境で頑張るのは俺が闇をすべて抱え込んで他のみんなは楽をしてくれ……！という感じになり自己満足ヒーロー感がありますね。
+
+テキストでコード定義を埋め込んでも同様のことは起こる
+
+ASTのケースであれば補完は効くが大きく組み替えるのは難しい
+
+*出てきたコードが意味不明*
+
+コード生成君を書いた人でないと意図が伝わりにくいコードが出てくることがある。
+
+まずテストも生成するのが一番いいのかもしれない。sqllaでは出来ていない。
+
+* 出てきたコードのインデントが崩れている
+
+go/formatを使う
+
+.play code/format/main.go
+
+* 使っていないパッケージがあると怒られる
+
+- Goは使っていないパッケージがあると怒られてコンパイルできないので何らかの方法で回避しなければならない
+
+: 前述の例では`strconv`をimportしているのにstringのfieldにしか変換しないと`strconv`を使わない

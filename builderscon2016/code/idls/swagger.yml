@@ -1,0 +1,33 @@
+swagger: '2.0'
+info:
+  title: Hoge Service API
+  version: "1.0.0"
+host: hoge.example.com
+schemes:
+  - https
+basePath: /v1
+produces:
+  - application/json
+paths:
+  /:
+    get:
+      summary: Root API
+      parameters:
+        - name: hoge_id
+          in: query
+          required: true
+          type: number
+          format: integer
+      responses:
+        200:
+          description: root response
+          schema:
+            type: object
+            items:
+              $ref: '#/definitions/RootResponse'
+definitions:
+  RootResponse:
+    type: object
+    properties:
+      hoge_id:
+        type: integer

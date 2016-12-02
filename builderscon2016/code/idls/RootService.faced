@@ -1,0 +1,26 @@
+namespace Data.Request
+{
+	entity RootRequest
+	{
+		HogeId:
+			!integer;
+	}
+}
+namespace Data.Response
+{
+	entity RootResponse
+	{
+		HogeId:
+			!integer;
+	}
+}
+namespace Service
+{
+
+	service RootService
+	{
+		Root:
+			<= !Data.Request.RootRequest
+			=> !Data.Response.RootResponse;
+	}
+}
