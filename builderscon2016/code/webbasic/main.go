@@ -25,8 +25,12 @@ type rootRequest struct {
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	enc := json.NewEncoder(w)
+
+	// ================================================
 	hogeIdStr := r.FormValue("hoge_id")
 	hogeId, err := strconv.Atoi(hogeIdStr)
+	// ================================================
+
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		enc.Encode(errResponse{err.Error()})
