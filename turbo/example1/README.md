@@ -10,7 +10,7 @@
 
 [2020年にシュッとPerlの環境構築をする](https://zenn.dev/anatofuz/articles/2742225639f9f8d7bb98)などを参照し、Perl環境を整備する。system perlでの動作は確認していない。
 
-`cpm`と`carton`っを導入する。`plenv install-cpanm`でcpanmは導入済みの前提。
+`cpm`と`carton`を導入する。`plenv install-cpanm`でcpanmは導入済みの前提。
 
 ```sh
 $ cpnam App::cpm Carton
