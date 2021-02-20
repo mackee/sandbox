@@ -1,0 +1,19 @@
+<div class="card">
+  <div class="card-header">コメント</div>
+  <div class="card-body">
+
+    <ul class="list-group" id="messages">
+        % for my $m (@$messages) {
+        <li id="message_<%= $m->{id} %>" class="list-group-item"><%= $m->{message} %></li>
+        % }
+    </ul>
+
+    <form method="POST" action="/messages">
+      <div class="input-group mb-3">
+        <input class="form-control" name="message" type="text" value="">
+        <input class="btn btn-outline-primary" type="submit" value="コメントする">
+      </div>
+    </form>
+
+  </div>
+</div>

@@ -1,11 +1,2 @@
-% layout "default";
-
-<turbo-frame id="comments">
-  % for my $message (@$messages) {
-  <p><%= $message %></p>
-  % }
-  <form method="POST" action="/messages">
-    <input name="message" type="text" value="">
-    <input type="submit">
-  </form>
-</turbo-frame>
+%= include '_toggles'
+%= include '_comments'

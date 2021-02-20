@@ -1,0 +1,7 @@
+<turbo-stream action='append' target='messages'>
+<template>
+  % for my $m (@$messages) {
+  <li id='message_<%= $m->{id} %>' class='list-group-item'><%= $m->{message} %></li>
+  % }
+</template>
+</turbo-stream>
